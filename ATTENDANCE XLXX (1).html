@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance System with Course Planner</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+
+        .logo h1 {
+            color: var(--dark);
+            font-size: 1.8rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--gray);
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-header h2 {
+            color: var(--dark);
+            font-size: 1.3rem;
+        }
+
+        .card-header i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .stat {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .attendance-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .method-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .method-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .method-icon i {
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .method-card h3 {
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+
+        .method-card p {
+            color: var(--gray);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38b2d6;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e07c0c;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d1146a;
+        }
+
+        .btn-sm {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+
+        .camera-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        #video {
+            width: 100%;
+            border-radius: 15px;
+            background: var(--dark);
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .scan-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 2px solid var(--success);
+            border-radius: 10px;
+            box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+        }
+
+        .attendance-list {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .attendance-list h2 {
+            color: var(--dark);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            color: var(--gray);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--dark);
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-present {
+            background: #e7f7ef;
+            color: #2ecc71;
+        }
+
+        .status-absent {
+            background: #fde8e8;
+            color: #e74c3c;
+        }
+
+        .status-late {
+            background: #fef5e7;
+            color: #f39c12;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 20px;
+            opacity: 0.8;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #result {
+            text-align: center;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .success {
+            background: #e7f7ef;
+            color: #2ecc71;
+        }
+
+        .error {
+            background: #fde8e8;
+            color: #e74c3c;
+        }
+
+        /* New Styles for Advanced Features */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            flex: 1;
+            text-align: center;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-bottom: 30px;
+        }
+
+        .study-planner {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .planner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .planner-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .planner-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .subject-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .subject-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .subject-name {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .priority-badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .priority-badge.high {
+            background: #fde8e8;
+            color: #e74c3c;
+        }
+
+        .priority-badge.medium {
+            background: #fef5e7;
+            color: #f39c12;
+        }
+
+        .priority-badge.low {
+            background: #e7f7ef;
+            color: #2ecc71;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+
+        .subject-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 10px;
+        }
+
+        .attendance-impact {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+
+        .impact-high {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .impact-medium {
+            color: #f39c12;
+            font-weight: 600;
+        }
+
+        .impact-low {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: var(--dark);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1001;
+            transform: translateX(150%);
+            transition: transform 0.3s;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid #2ecc71;
+        }
+
+        .notification.warning {
+            border-left: 4px solid #f39c12;
+        }
+
+        .notification.error {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .course-schedule {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .day-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .day-header {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .session-item {
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .session-item:last-child {
+            border-bottom: none;
+        }
+
+        .session-time {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .session-subject {
+            font-weight: 500;
+        }
+
+        .attendance-badge {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .attendance-present {
+            background: #2ecc71;
+        }
+
+        .attendance-absent {
+            background: #e74c3c;
+        }
+
+        .attendance-unknown {
+            background: #bdc3c7;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .planner-header, .schedule-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .planner-controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-fingerprint"></i>
+                <h1>Smart Attendance System</h1>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="active" data-tab="dashboardTab">Dashboard</a>
+                <a href="#" data-tab="reportsTabContent">Reports</a>
+                <a href="#" data-tab="plannerTabContent">Course Planner</a>
+                <a href="#" data-tab="scheduleTabContent">Schedule</a>
+                <a href="#" data-tab="settingsTabContent">Settings</a>
+                <a href="#"><i class="fas fa-user"></i> Admin</a>
+            </div>
+        </header>
+
+        <!-- Notification System -->
+        <div class="notification hidden" id="notification">
+            <i class="fas fa-bell"></i>
+            <span id="notificationText">Notification message</span>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboardTab" class="tab-content active">
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Total Students</h2>
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat" id="totalStudents">1,247</div>
+                    <p>Registered in system</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Present Today</h2>
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat" id="presentToday">893</div>
+                    <p>71.6% Attendance</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Absent Today</h2>
+                        <i class="fas fa-user-times"></i>
+                    </div>
+                    <div class="stat" id="absentToday">354</div>
+                    <p>28.4% Absenteeism</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Late Today</h2>
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat" id="lateToday">67</div>
+                    <p>7.5% of present</p>
+                </div>
+            </div>
+
+            <div class="attendance-methods">
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <h3>Facial Recognition</h3>
+                    <p>Mark your attendance using our advanced facial recognition technology. Fast and secure.</p>
+                    <button class="btn btn-primary" id="startFaceRecognition">Start Camera</button>
+                    
+                    <div class="camera-container hidden" id="faceCameraContainer">
+                        <video id="videoFace" autoplay playsinline></video>
+                        <canvas id="canvasFace"></canvas>
+                        <div id="faceResult"></div>
+                    </div>
+                </div>
+
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <h3>QR Code Scan</h3>
+                    <p>Scan your personalized QR code to mark attendance. Quick and efficient.</p>
+                    <button class="btn btn-success" id="startQRScan">Scan QR Code</button>
+                    
+                    <div class="camera-container hidden" id="qrCameraContainer">
+                        <video id="videoQR" autoplay playsinline></video>
+                        <canvas id="canvasQR"></canvas>
+                        <div class="scan-area"></div>
+                        <div id="qrResult"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="attendance-list">
+                <h2>Today's Attendance</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Time</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTable">
+                        <tr>
+                            <td>S001</td>
+                            <td>John Smith</td>
+                            <td>08:15 AM</td>
+                            <td>Facial Recognition</td>
+                            <td><span class="status status-present">Present</span></td>
+                        </tr>
+                        <tr>
+                            <td>S002</td>
+                            <td>Emma Johnson</td>
+                            <td>08:20 AM</td>
+                            <td>QR Code</td>
+                            <td><span class="status status-present">Present</span></td>
+                        </tr>
+                        <tr>
+                            <td>S003</td>
+                            <td>Michael Brown</td>
+                            <td>09:05 AM</td>
+                            <td>Facial Recognition</td>
+                            <td><span class="status status-late">Late</span></td>
+                        </tr>
+                        <tr>
+                            <td>S004</td>
+                            <td>Sarah Davis</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td><span class="status status-absent">Absent</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reportsTabContent" class="tab-content">
+            <div class="tabs">
+                <div class="tab active" data-tab="attendanceReport">Attendance Report</div>
+                <div class="tab" data-tab="analytics">Analytics</div>
+                <div class="tab" data-tab="export">Export Data</div>
+            </div>
+
+            <div class="tab-content active" id="attendanceReport">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Monthly Attendance Overview</h2>
+                        <select id="monthSelector">
+                            <option value="0">January</option>
+                            <option value="1">February</option>
+                            <option value="2">March</option>
+                            <option value="3">April</option>
+                            <option value="4">May</option>
+                            <option value="5">June</option>
+                            <option value="6">July</option>
+                            <option value="7">August</option>
+                            <option value="8">September</option>
+                            <option value="9">October</option>
+                            <option value="10">November</option>
+                            <option value="11">December</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="analytics">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Attendance Analytics</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="analyticsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="export">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Export Attendance Data</h2>
+                    </div>
+                    <div class="form-group">
+                        <label for="exportFormat">Select Format</label>
+                        <select id="exportFormat" class="form-control">
+                            <option value="csv">CSV</option>
+                            <option value="pdf">PDF</option>
+                            <option value="excel">Excel</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dateRange">Date Range</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="date" id="startDate" class="form-control">
+                            <input type="date" id="endDate" class="form-control">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="exportBtn">Export Data</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Planner Tab -->
+        <div id="plannerTabContent" class="tab-content">
+            <div class="study-planner">
+                <div class="planner-header">
+                    <h2>Course Study Planner</h2>
+                    <div class="planner-controls">
+                        <button class="btn btn-primary" id="addSubjectBtn">Add Course</button>
+                        <button class="btn btn-warning" id="generatePlanBtn">Generate Plan</button>
+                        <button class="btn btn-success" id="optimizePlanBtn">Optimize Based on Attendance</button>
+                    </div>
+                </div>
+
+                <div class="planner-grid" id="subjectsContainer">
+                    <!-- Courses will be dynamically added here -->
+                </div>
+
+                <div class="card" style="margin-top: 30px;">
+                    <div class="card-header">
+                        <h2>Study Progress</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="studyProgressChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Tab -->
+        <div id="scheduleTabContent" class="tab-content">
+            <div class="course-schedule">
+                <div class="schedule-header">
+                    <h2>Weekly Course Schedule</h2>
+                    <div>
+                        <button class="btn btn-primary" id="prevWeekBtn">Previous Week</button>
+                        <span id="currentWeekDisplay" style="margin: 0 15px; font-weight: 600;">Week 1</span>
+                        <button class="btn btn-primary" id="nextWeekBtn">Next Week</button>
+                    </div>
+                </div>
+                <div class="schedule-grid" id="scheduleContainer">
+                    <!-- Schedule will be dynamically generated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settingsTabContent" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>System Settings</h2>
+                </div>
+                <div class="form-group">
+                    <label for="attendanceThreshold">Attendance Threshold (%)</label>
+                    <input type="range" id="attendanceThreshold" min="50" max="100" value="75" class="form-control">
+                    <span id="thresholdValue">75%</span>
+                </div>
+                <div class="form-group">
+                    <label for="lateThreshold">Late Threshold (minutes)</label>
+                    <input type="number" id="lateThreshold" value="15" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="notifications">Enable Notifications</label>
+                    <input type="checkbox" id="notifications" checked>
+                </div>
+                <button class="btn btn-primary">Save Settings</button>
+            </div>
+        </div>
+
+        <!-- Add Course Modal -->
+        <div class="modal" id="addSubjectModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add New Course</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="form-group">
+                    <label for="subjectName">Course Name</label>
+                    <input type="text" id="subjectName" class="form-control" placeholder="e.g., Mathematics">
+                </div>
+                <div class="form-group">
+                    <label for="totalChapters">Total Topics/Chapters</label>
+                    <input type="number" id="totalChapters" class="form-control" placeholder="e.g., 10">
+                </div>
+                <div class="form-group">
+                    <label for="examDate">Exam Date</label>
+                    <input type="date" id="examDate" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="difficulty">Difficulty Level</label>
+                    <select id="difficulty" class="form-control">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select id="priority" class="form-control">
+                        <option value="high">High</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="weeklySessions">Weekly Sessions</label>
+                    <input type="number" id="weeklySessions" class="form-control" value="3" min="1" max="7">
+                </div>
+                <button class="btn btn-primary" id="saveSubjectBtn">Add Course</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>Smart Attendance System &copy; 2025 | Powered by AI Technology</p>
+        </footer>
+    </div>
+
+    <script>
+        // Dashboard Stats Animation
+        function animateValue(id, start, end, duration) {
+            let obj = document.getElementById(id);
+            let range = end - start;
+            let increment = end > start ? 1 : -1;
+            let step = Math.abs(Math.floor(duration / range));
+            let timer = setInterval(() => {
+                start += increment;
+                obj.textContent = start;
+                if (start == end) clearInterval(timer);
+            }, step);
+        }
+
+        // Simulate loading stats
+        setTimeout(() => {
+            animateValue("totalStudents", 0, 1247, 2000);
+            animateValue("presentToday", 0, 893, 2000);
+            animateValue("absentToday", 0, 354, 2000);
+            animateValue("lateToday", 0, 67, 2000);
+        }, 1000);
+
+        // Tab Navigation
+        document.querySelectorAll('.nav-links a').forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.nav-links a').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Show corresponding content
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+                
+                // Initialize specific tab content if needed
+                if (tabId === 'scheduleTabContent') {
+                    generateWeeklySchedule();
+                }
+            });
+        });
+
+        // Sub-tab Navigation for Reports
+        document.querySelectorAll('.tab[data-tab]').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Hide all tab contents
+                document.querySelectorAll('#reportsTabContent .tab-content').forEach(c => c.classList.remove('active'));
+                // Show corresponding content
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Notification System
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Facial Recognition
+        const faceRecognitionBtn = document.getElementById('startFaceRecognition');
+        const faceCameraContainer = document.getElementById('faceCameraContainer');
+        const videoFace = document.getElementById('videoFace');
+        const canvasFace = document.getElementById('canvasFace');
+        const faceResult = document.getElementById('faceResult');
+
+        faceRecognitionBtn.addEventListener('click', async () => {
+            if (faceCameraContainer.classList.contains('hidden')) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    videoFace.srcObject = stream;
+                    faceCameraContainer.classList.remove('hidden');
+                    faceRecognitionBtn.textContent = 'Stop Camera';
+                    
+                    // Simulate face detection
+                    simulateFaceDetection();
+                } catch (err) {
+                    faceResult.innerHTML = `<div class="error">Error accessing camera: ${err.message}</div>`;
+                }
+            } else {
+                stopCamera();
+                faceCameraContainer.classList.add('hidden');
+                faceRecognitionBtn.textContent = 'Start Camera';
+                faceResult.innerHTML = '';
+            }
+        });
+
+        function simulateFaceDetection() {
+            let attempts = 0;
+            const detectionInterval = setInterval(() => {
+                if (faceCameraContainer.classList.contains('hidden')) {
+                    clearInterval(detectionInterval);
+                    return;
+                }
+                
+                attempts++;
+                if (attempts > 3) {
+                    clearInterval(detectionInterval);
+                    faceResult.innerHTML = `<div class="success">Attendance marked successfully! Welcome, John Smith.</div>`;
+                    addAttendanceRecord('S001', 'John Smith', getCurrentTime(), 'Facial Recognition', 'Present');
+                    showNotification('Attendance marked via Facial Recognition', 'success');
+                    
+                    // Update course planner based on attendance
+                    updateCoursePlannerBasedOnAttendance('S001');
+                } else {
+                    faceResult.innerHTML = `<div>Detecting face... Attempt ${attempts}/3</div>`;
+                }
+            }, 1500);
+        }
+
+        // QR Code Scanning
+        const qrScanBtn = document.getElementById('startQRScan');
+        const qrCameraContainer = document.getElementById('qrCameraContainer');
+        const videoQR = document.getElementById('videoQR');
+        const canvasQR = document.getElementById('canvasQR');
+        const qrResult = document.getElementById('qrResult');
+
+        qrScanBtn.addEventListener('click', async () => {
+            if (qrCameraContainer.classList.contains('hidden')) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    videoQR.srcObject = stream;
+                    qrCameraContainer.classList.remove('hidden');
+                    qrScanBtn.textContent = 'Stop Scanning';
+                    
+                    // Start QR code detection
+                    scanQRCode();
+                } catch (err) {
+                    qrResult.innerHTML = `<div class="error">Error accessing camera: ${err.message}</div>`;
+                }
+            } else {
+                stopCamera();
+                qrCameraContainer.classList.add('hidden');
+                qrScanBtn.textContent = 'Scan QR Code';
+                qrResult.innerHTML = '';
+            }
+        });
+
+        function scanQRCode() {
+            const canvas = canvasQR.getContext('2d');
+            
+            function tick() {
+                if (videoQR.readyState === videoQR.HAVE_ENOUGH_DATA) {
+                    canvasQR.height = videoQR.videoHeight;
+                    canvasQR.width = videoQR.videoWidth;
+                    canvas.drawImage(videoQR, 0, 0, canvasQR.width, canvasQR.height);
+                    
+                    const imageData = canvas.getImageData(0, 0, canvasQR.width, canvasQR.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    
+                    if (code) {
+                        qrResult.innerHTML = `<div class="success">QR Code detected: ${code.data}</div>`;
+                        // Simulate attendance marking
+                        setTimeout(() => {
+                            qrResult.innerHTML += `<div class="success">Attendance marked for Student ID: ${code.data}</div>`;
+                            addAttendanceRecord(code.data, 'Emma Johnson', getCurrentTime(), 'QR Code', 'Present');
+                            showNotification('Attendance marked via QR Code', 'success');
+                            
+                            // Update course planner based on attendance
+                            updateCoursePlannerBasedOnAttendance(code.data);
+                        }, 1000);
+                    }
+                }
+                
+                if (!qrCameraContainer.classList.contains('hidden')) {
+                    requestAnimationFrame(tick);
+                }
+            }
+            tick();
+        }
+
+        // Course Planner Functionality
+        let subjects = JSON.parse(localStorage.getItem('subjects')) || [];
+        let currentWeek = 1;
+
+        // Initialize course planner if there are subjects
+        function initCoursePlanner() {
+            const subjectsContainer = document.getElementById('subjectsContainer');
+            subjectsContainer.innerHTML = '';
+            
+            if (subjects.length === 0) {
+                subjectsContainer.innerHTML = '<p>No courses added yet. Click "Add Course" to get started.</p>';
+                return;
+            }
+            
+            subjects.forEach((subject, index) => {
+                const daysRemaining = Math.ceil((new Date(subject.examDate) - new Date()) / (1000 * 60 * 60 * 24));
+                const progress = Math.min(100, Math.round((subject.completedChapters / subject.totalChapters) * 100));
+                
+                // Calculate attendance impact
+                const attendanceImpact = calculateAttendanceImpact(subject);
+                
+                const subjectCard = document.createElement('div');
+                subjectCard.className = 'subject-card';
+                subjectCard.innerHTML = `
+                    <div class="subject-header">
+                        <div class="subject-name">${subject.name}</div>
+                        <div class="priority-badge ${subject.priority}">${subject.priority}</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: ${progress}%"></div>
+                    </div>
+                    <div class="subject-details">
+                        <span>${subject.completedChapters}/${subject.totalChapters} topics</span>
+                        <span>${daysRemaining} days left</span>
+                    </div>
+                    <div class="attendance-impact">
+                        Attendance Impact: <span class="impact-${attendanceImpact.level}">${attendanceImpact.text}</span>
+                    </div>
+                    <div style="margin-top: 15px; display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button class="btn btn-primary btn-sm" onclick="updateProgress(${index}, 1)">+1 Topic</button>
+                        <button class="btn btn-warning btn-sm" onclick="editSubject(${index})">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteSubject(${index})">Delete</button>
+                    </div>
+                `;
+                
+                subjectsContainer.appendChild(subjectCard);
+            });
+            
+            updateStudyProgressChart();
+        }
+
+        // Calculate attendance impact on course progress
+        function calculateAttendanceImpact(subject) {
+            // Simulate attendance data for the subject
+            const attendanceRate = Math.random() * 100; // Random for demo
+            const expectedProgress = (subject.weeksStudied / subject.totalWeeks) * 100;
+            const actualProgress = (subject.completedChapters / subject.totalChapters) * 100;
+            const progressGap = expectedProgress - actualProgress;
+            
+            if (progressGap > 20) {
+                return { level: 'high', text: 'High - Need to catch up' };
+            } else if (progressGap > 10) {
+                return { level: 'medium', text: 'Medium - Slightly behind' };
+            } else {
+                return { level: 'low', text: 'Low - On track' };
+            }
+        }
+
+        // Update course planner based on attendance patterns
+        function updateCoursePlannerBasedOnAttendance(studentId) {
+            // In a real system, this would analyze attendance patterns
+            // and adjust the study plan accordingly
+            
+            // For demo purposes, we'll simulate some adjustments
+            subjects.forEach((subject, index) => {
+                // If attendance is good, slightly increase priority for difficult subjects
+                if (Math.random() > 0.7) { // 30% chance of adjustment
+                    if (subject.difficulty === 'hard' && subject.priority !== 'high') {
+                        subject.priority = 'high';
+                        showNotification(`Increased priority for ${subject.name} based on attendance`, 'warning');
+                    }
+                }
+            });
+            
+            localStorage.setItem('subjects', JSON.stringify(subjects));
+            initCoursePlanner();
+        }
+
+        // Add Course Modal
+        const addSubjectBtn = document.getElementById('addSubjectBtn');
+        const addSubjectModal = document.getElementById('addSubjectModal');
+        const closeModalBtn = document.querySelector('.close-modal');
+        const saveSubjectBtn = document.getElementById('saveSubjectBtn');
+
+        addSubjectBtn.addEventListener('click', () => {
+            addSubjectModal.style.display = 'flex';
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            addSubjectModal.style.display = 'none';
+        });
+
+        saveSubjectBtn.addEventListener('click', () => {
+            const subjectName = document.getElementById('subjectName').value;
+            const totalChapters = parseInt(document.getElementById('totalChapters').value);
+            const examDate = document.getElementById('examDate').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const priority = document.getElementById('priority').value;
+            const weeklySessions = parseInt(document.getElementById('weeklySessions').value);
+            
+            if (!subjectName || !totalChapters || !examDate) {
+                showNotification('Please fill all required fields', 'error');
+                return;
+            }
+            
+            const totalWeeks = Math.ceil((new Date(examDate) - new Date()) / (1000 * 60 * 60 * 24 * 7));
+            
+            const newSubject = {
+                name: subjectName,
+                totalChapters: totalChapters,
+                completedChapters: 0,
+                examDate: examDate,
+                difficulty: difficulty,
+                priority: priority,
+                weeklySessions: weeklySessions,
+                totalWeeks: totalWeeks,
+                weeksStudied: 0,
+                attendanceRate: 0 // Will be calculated based on actual attendance
+            };
+            
+            subjects.push(newSubject);
+            localStorage.setItem('subjects', JSON.stringify(subjects));
+            
+            addSubjectModal.style.display = 'none';
+            initCoursePlanner();
+            showNotification('Course added successfully', 'success');
+            
+            // Reset form
+            document.getElementById('subjectName').value = '';
+            document.getElementById('totalChapters').value = '';
+            document.getElementById('examDate').value = '';
+        });
+
+        // Course Planner Functions
+        window.updateProgress = function(index, chapters) {
+            if (subjects[index].completedChapters + chapters <= subjects[index].totalChapters) {
+                subjects[index].completedChapters += chapters;
+                subjects[index].weeksStudied = Math.ceil(subjects[index].completedChapters / 
+                    (subjects[index].totalChapters / subjects[index].totalWeeks));
+                localStorage.setItem('subjects', JSON.stringify(subjects));
+                initCoursePlanner();
+                showNotification(`Progress updated for ${subjects[index].name}`, 'success');
+            } else {
+                showNotification('Cannot exceed total chapters', 'error');
+            }
+        };
+
+        window.editSubject = function(index) {
+            // Implementation for editing a subject
+            showNotification('Edit feature coming soon', 'warning');
+        };
+
+        window.deleteSubject = function(index) {
+            if (confirm(`Are you sure you want to delete ${subjects[index].name}?`)) {
+                subjects.splice(index, 1);
+                localStorage.setItem('subjects', JSON.stringify(subjects));
+                initCoursePlanner();
+                showNotification('Course deleted successfully', 'success');
+            }
+        };
+
+        // Generate Study Plan
+        document.getElementById('generatePlanBtn').addEventListener('click', function() {
+            if (subjects.length === 0) {
+                showNotification('Please add courses first', 'error');
+                return;
+            }
+            
+            // Simple study plan generation logic
+            let plan = "Study Plan:\n\n";
+            subjects.forEach(subject => {
+                const daysRemaining = Math.ceil((new Date(subject.examDate) - new Date()) / (1000 * 60 * 60 * 24));
+                const chaptersPerWeek = Math.ceil((subject.totalChapters - subject.completedChapters) / 
+                    Math.ceil(daysRemaining / 7));
+                
+                plan += `- ${subject.name} (${subject.priority} priority): ${chaptersPerWeek} topics per week\n`;
+            });
+            
+            alert(plan);
+            showNotification('Study plan generated successfully', 'success');
+        });
+
+        // Optimize Plan Based on Attendance
+        document.getElementById('optimizePlanBtn').addEventListener('click', function() {
+            if (subjects.length === 0) {
+                showNotification('Please add courses first', 'error');
+                return;
+            }
+            
+            // Analyze attendance and adjust plan
+            let optimizationReport = "Optimization based on attendance:\n\n";
+            
+            subjects.forEach(subject => {
+                // Simulate attendance analysis
+                const simulatedAttendance = Math.random() * 100;
+                subject.attendanceRate = simulatedAttendance;
+                
+                if (simulatedAttendance < 70) {
+                    // Low attendance - increase weekly sessions
+                    subject.weeklySessions = Math.min(7, subject.weeklySessions + 1);
+                    optimizationReport += `- ${subject.name}: Low attendance (${simulatedAttendance.toFixed(1)}%). Increased weekly sessions to ${subject.weeklySessions}.\n`;
+                } else if (simulatedAttendance > 90) {
+                    // High attendance - could reduce sessions if ahead of schedule
+                    const progressRatio = subject.completedChapters / subject.totalChapters;
+                    const expectedProgress = subject.weeksStudied / subject.totalWeeks;
+                    
+                    if (progressRatio > expectedProgress + 0.1) {
+                        subject.weeklySessions = Math.max(1, subject.weeklySessions - 1);
+                        optimizationReport += `- ${subject.name}: High attendance (${simulatedAttendance.toFixed(1)}%) and ahead of schedule. Reduced weekly sessions to ${subject.weeklySessions}.\n`;
+                    } else {
+                        optimizationReport += `- ${subject.name}: High attendance (${simulatedAttendance.toFixed(1)}%). No changes needed.\n`;
+                    }
+                } else {
+                    optimizationReport += `- ${subject.name}: Average attendance (${simulatedAttendance.toFixed(1)}%). No changes needed.\n`;
+                }
+            });
+            
+            localStorage.setItem('subjects', JSON.stringify(subjects));
+            initCoursePlanner();
+            
+            alert(optimizationReport);
+            showNotification('Study plan optimized based on attendance', 'success');
+        });
+
+        // Weekly Schedule Generation
+        function generateWeeklySchedule() {
+            const scheduleContainer = document.getElementById('scheduleContainer');
+            scheduleContainer.innerHTML = '';
+            
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const timeSlots = [
+                '08:00 - 09:30', '10:00 - 11:30', '12:00 - 13:30', 
+                '14:00 - 15:30', '16:00 - 17:30'
+            ];
+            
+            days.forEach(day => {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'day-card';
+                
+                let dayContent = `<div class="day-header">${day}</div>`;
+                
+                // Assign subjects to time slots based on their weekly sessions and priority
+                const daySubjects = getSubjectsForDay(day, days.indexOf(day));
+                
+                timeSlots.forEach(slot => {
+                    const subjectForSlot = daySubjects.find(s => s.timeSlot === slot) || 
+                                         { name: 'Free', attendance: 'unknown' };
+                    
+                    dayContent += `
+                        <div class="session-item">
+                            <div class="session-time">${slot}</div>
+                            <div class="session-subject">
+                                <span class="attendance-badge attendance-${subjectForSlot.attendance}"></span>
+                                ${subjectForSlot.name}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                dayCard.innerHTML = dayContent;
+                scheduleContainer.appendChild(dayCard);
+            });
+            
+            document.getElementById('currentWeekDisplay').textContent = `Week ${currentWeek}`;
+        }
+
+        function getSubjectsForDay(day, dayIndex) {
+            // This function would assign subjects to days based on their weekly sessions
+            // For demo, we'll create a simple schedule
+            const subjectsForDay = [];
+            
+            if (subjects.length === 0) return subjectsForDay;
+            
+            // Simple scheduling algorithm based on priority and weekly sessions
+            subjects.forEach(subject => {
+                // Higher priority subjects get more preferred time slots
+                if (dayIndex < subject.weeklySessions) {
+                    const timeSlots = ['08:00 - 09:30', '10:00 - 11:30', '12:00 - 13:30', '14:00 - 15:30', '16:00 - 17:30'];
+                    const timeSlot = timeSlots[dayIndex % timeSlots.length];
+                    
+                    // Simulate attendance status for the session
+                    const attendanceStatus = Math.random() > 0.3 ? 'present' : 'absent';
+                    
+                    subjectsForDay.push({
+                        name: subject.name,
+                        timeSlot: timeSlot,
+                        attendance: attendanceStatus
+                    });
+                }
+            });
+            
+            return subjectsForDay;
+        }
+
+        // Week Navigation
+        document.getElementById('prevWeekBtn').addEventListener('click', function() {
+            if (currentWeek > 1) {
+                currentWeek--;
+                generateWeeklySchedule();
+            }
+        });
+
+        document.getElementById('nextWeekBtn').addEventListener('click', function() {
+            currentWeek++;
+            generateWeeklySchedule();
+        });
+
+        // Charts
+        function initCharts() {
+            // Attendance Chart
+            const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+            const attendanceChart = new Chart(attendanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Present',
+                        data: [85, 79, 90, 81],
+                        backgroundColor: '#4cc9f0'
+                    }, {
+                        label: 'Absent',
+                        data: [15, 21, 10, 19],
+                        backgroundColor: '#f72585'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Analytics Chart
+            const analyticsCtx = document.getElementById('analyticsChart').getContext('2d');
+            const analyticsChart = new Chart(analyticsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Present', 'Absent', 'Late'],
+                    datasets: [{
+                        data: [75, 15, 10],
+                        backgroundColor: ['#4cc9f0', '#f72585', '#f8961e']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function updateStudyProgressChart() {
+            const studyProgressCtx = document.getElementById('studyProgressChart').getContext('2d');
+            
+            if (window.studyProgressChart) {
+                window.studyProgressChart.destroy();
+            }
+            
+            if (subjects.length === 0) return;
+            
+            window.studyProgressChart = new Chart(studyProgressCtx, {
+                type: 'bar',
+                data: {
+                    labels: subjects.map(s => s.name),
+                    datasets: [{
+                        label: 'Completion %',
+                        data: subjects.map(s => Math.round((s.completedChapters / s.totalChapters) * 100)),
+                        backgroundColor: '#4361ee'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Export Data
+        document.getElementById('exportBtn').addEventListener('click', function() {
+            const format = document.getElementById('exportFormat').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (!startDate || !endDate) {
+                showNotification('Please select date range', 'error');
+                return;
+            }
+            
+            // Simulate export
+            showNotification(`Data exported as ${format.toUpperCase()} for ${startDate} to ${endDate}`, 'success');
+        });
+
+        // Settings
+        document.getElementById('attendanceThreshold').addEventListener('input', function() {
+            document.getElementById('thresholdValue').textContent = this.value + '%';
+        });
+
+        // Utility Functions
+        function stopCamera() {
+            if (videoFace.srcObject) {
+                videoFace.srcObject.getTracks().forEach(track => track.stop());
+            }
+            if (videoQR.srcObject) {
+                videoQR.srcObject.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function addAttendanceRecord(id, name, time, method, status) {
+            const table = document.getElementById('attendanceTable');
+            const newRow = document.createElement('tr');
+            
+            const statusClass = status === 'Present' ? 'status-present' : 
+                              status === 'Absent' ? 'status-absent' : 'status-late';
+            
+            newRow.innerHTML = `
+                <td>${id}</td>
+                <td>${name}</td>
+                <td>${time}</td>
+                <td>${method}</td>
+                <td><span class="status ${statusClass}">${status}</span></td>
+            `;
+            
+            // Add new record at the top
+            table.insertBefore(newRow, table.firstChild);
+            
+            // Update dashboard stats
+            updateStats(status);
+        }
+
+        function updateStats(status) {
+            // This would typically update the backend, here we just simulate UI update
+            const presentStat = document.querySelector('.card:nth-child(2) .stat');
+            const absentStat = document.querySelector('.card:nth-child(3) .stat');
+            const lateStat = document.querySelector('.card:nth-child(4) .stat');
+            
+            if (status === 'Present') {
+                presentStat.textContent = parseInt(presentStat.textContent) + 1;
+                absentStat.textContent = Math.max(0, parseInt(absentStat.textContent) - 1);
+            } else if (status === 'Late') {
+                presentStat.textContent = parseInt(presentStat.textContent) + 1;
+                absentStat.textContent = Math.max(0, parseInt(absentStat.textContent) - 1);
+                lateStat.textContent = parseInt(lateStat.textContent) + 1;
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            initCoursePlanner();
+            
+            // Set current month as default in selector
+            const currentMonth = new Date().getMonth();
+            document.getElementById('monthSelector').value = currentMonth;
+            
+            // Set default dates for export
+            const today = new Date();
+            const oneWeekAgo = new Date(today);
+            oneWeekAgo.setDate(today.getDate() - 7);
+            
+            document.getElementById('startDate').valueAsDate = oneWeekAgo;
+            document.getElementById('endDate').valueAsDate = today;
+            
+            // Generate initial schedule
+            generateWeeklySchedule();
+        });
+    </script>
+</body>
+</html>
