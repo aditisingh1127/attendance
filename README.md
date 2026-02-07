@@ -1,5 +1,5 @@
 # attendance
 .....
 <br>
-ateendence 
+attendence 
 
